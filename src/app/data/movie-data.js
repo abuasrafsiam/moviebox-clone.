@@ -177,25 +177,26 @@ export const movieStreams = {
   },
   "5598": {
     type: "movie",
-    youtubeId: "mZpJSV-P7vA",
+    youtubeId: "nwRMa1RNDI",
     title: "Kingdom of Heaven"
   }
 };
 
 // ── Curated IDs to feature on the Home grid (ordered by priority) ──────────
 export const FEATURED_HOME_IDS = [
-  { id: "27205",      type: "movie" },   // Inception
-  { id: "157336",     type: "movie" },   // Interstellar
-  { id: "438631",     type: "movie" },   // Dune: Part One
-  { id: "693134",     type: "movie" },   // Dune: Part Two
-  { id: "603",        type: "movie" },   // The Matrix
-  { id: "577922",     type: "movie" },   // Tenet
-  { id: "335984",     type: "movie" },   // Blade Runner 2049
-  { id: "155",        type: "movie" },   // The Dark Knight
-  { id: "329865",     type: "movie" },   // Arrival
-  { id: "264660",     type: "movie" },   // Ex Machina
-  { id: "545611",     type: "movie" },   // Everything Everywhere
-  { id: "286217",     type: "movie" },   // The Martian
+  { id: "27205", type: "movie" },   // Inception
+  { id: "157336", type: "movie" },   // Interstellar
+  { id: "438631", type: "movie" },   // Dune: Part One
+  { id: "693134", type: "movie" },   // Dune: Part Two
+  { id: "603", type: "movie" },   // The Matrix
+  { id: "577922", type: "movie" },   // Tenet
+  { id: "335984", type: "movie" },   // Blade Runner 2049
+  { id: "155", type: "movie" },   // The Dark Knight
+  { id: "329865", type: "movie" },   // Arrival
+  { id: "264660", type: "movie" },   // Ex Machina
+  { id: "545611", type: "movie" },   // Everything Everywhere
+  { id: "286217", type: "movie" },   // The Martian
+  { id: "5598", type: "movie" },   // Kingdom of Heaven
 ];
 
 // ── Helper functions ───────────────────────────────────────────────────────
