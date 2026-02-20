@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Minimize2, RotateCcw, Play, Pause } from 'lucide-react';
+import { ChevronLeft, Minimize2, Play, Pause } from 'lucide-react';
 import { useFullscreen } from '../context/FullscreenContext';
 
 declare global {
@@ -21,16 +21,16 @@ interface YouTubePlayerProps {
   season?: number;
 }
 
-export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({ 
-  youtubeId, 
-  title, 
+export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
+  youtubeId,
+  title,
   onBack,
   onFullscreenChange,
-  autoplay = true 
+  autoplay = true
 }) => {
   const navigate = useNavigate();
   const { setIsFullscreen: setGlobalFullscreen } = useFullscreen();
-  
+
   // State
   const [showControls, setShowControls] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -39,7 +39,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [screenW, setScreenW] = useState(0);
   const [screenH, setScreenH] = useState(0);
-  
+
   // Refs
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   // Load YouTube IFrame API once globally
   useEffect(() => {
     if (window.YT) return; // Already loaded
-    
+
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -60,10 +60,10 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   // Initialize player when API is ready
   useEffect(() => {
     if (!youtubeId || !youtubeContainerRef.current) return;
-    
+
     const initPlayer = () => {
       if (playerRef.current) return; // Already initialized
-      
+
       playerRef.current = new window.YT.Player(youtubeContainerRef.current, {
         videoId: youtubeId,
         height: '100%',
@@ -174,6 +174,15 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     if (newFullscreen) {
       setScreenW(window.innerWidth);
       setScreenH(window.innerHeight);
+      // Lock to landscape when entering fullscreen
+      try {
+        (screen.orientation as any).lock('landscape');
+      } catch {
+        // Screen Orientation API not supported on this browser — silently ignore
+      }
+    } else {
+      // Unlock orientation when exiting fullscreen
+      screen.orientation.unlock();
     }
     setIsFullscreen(newFullscreen);
     setGlobalFullscreen(newFullscreen);
@@ -205,6 +214,17 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     return () => window.removeEventListener('resize', onResize);
   }, [isFullscreen]);
 
+  // Auto-show controls when fullscreen state changes
+  useEffect(() => {
+    if (isFullscreen) {
+      setShowControls(true);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = setTimeout(() => setShowControls(false), 4000);
+    } else {
+      setShowControls(false);
+    }
+  }, [isFullscreen]);
+
   useEffect(() => {
     return () => {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
@@ -220,8 +240,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     );
   }
 
-  // Fullscreen mode
+  // Fullscreen mode — all controls live INSIDE the rotated div so they align correctly
   if (isFullscreen) {
+    // We swap w/h so the rotated box fills the screen edge-to-edge
     const rotW = screenH || window.innerHeight;
     const rotH = screenW || window.innerWidth;
 
@@ -238,6 +259,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           overflow: 'hidden',
         }}
       >
+        {/* Rotated container — everything inside matches the landscape orientation */}
         <div
           ref={containerRef}
           style={{
@@ -253,100 +275,91 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           onMouseMove={showPlayerControls}
           onTouchMove={showPlayerControls}
         >
-          {/* YouTube Player Container */}
+          {/* YouTube iframe fills the rotated box */}
           <div
             ref={youtubeContainerRef}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-            }}
+            style={{ position: 'absolute', inset: 0 }}
           />
 
-          {/* Custom Controls Overlay */}
+          {/* Controls overlay — fades in/out */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              pointerEvents: 'none',
               zIndex: 90,
               opacity: showControls ? 1 : 0,
               transition: 'opacity 0.3s',
+              pointerEvents: showControls ? 'none' : 'none',
             }}
           >
-            {/* Top Gradient */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 80,
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)',
-              }}
-            />
+            {/* Top gradient */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: 90,
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.75), transparent)',
+              pointerEvents: 'none',
+            }} />
 
-            {/* Center Play Button - Infinix Styled */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+            {/* Top-left: Back button */}
+            <button
+              onClick={handleBackClick}
+              style={{ position: 'absolute', top: 16, left: 16, pointerEvents: 'auto' }}
+              className="w-14 h-14 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:border-[#00ffa3]/60 transition-all shadow-[0_0_8px_rgba(0,255,163,0.15)] active:scale-95"
+              title="Back"
+            >
+              <ChevronLeft size={32} className="text-white" strokeWidth={2.5} />
+            </button>
+
+            {/* Top-right: Exit fullscreen (Minimize) */}
+            <button
+              onClick={handleFullscreenToggle}
+              style={{ position: 'absolute', top: 16, right: 16, pointerEvents: 'auto' }}
+              className="w-14 h-14 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:border-[#00ffa3]/60 transition-all shadow-[0_0_8px_rgba(0,255,163,0.15)] active:scale-95"
+              title="Exit Fullscreen"
+            >
+              {/* Close-fullscreen SVG: landscape rect with inward arrows */}
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="7" width="22" height="14" rx="2" stroke="white" strokeWidth="2" />
+                {/* Left inward arrow */}
+                <polyline points="8,14 5,14" stroke="#00ffa3" strokeWidth="2" strokeLinecap="round" />
+                <polyline points="7,12 5,14 7,16" stroke="#00ffa3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Right inward arrow */}
+                <polyline points="20,14 23,14" stroke="#00ffa3" strokeWidth="2" strokeLinecap="round" />
+                <polyline points="21,12 23,14 21,16" stroke="#00ffa3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            {/* Center: Play/Pause */}
+            <div className="absolute inset-0 flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
               <button
                 onClick={handlePlayPause}
                 className="w-24 h-24 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:bg-white/20 hover:border-[#00ffa3]/60 transition-all active:scale-95 shadow-[0_0_20px_rgba(0,255,163,0.3)]"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
-                {isPlaying ? (
-                  <Pause size={56} className="text-white fill-white" />
-                ) : (
-                  <Play size={56} className="text-white fill-white ml-1" />
-                )}
+                {isPlaying
+                  ? <Pause size={52} className="text-white fill-white" />
+                  : <Play size={52} className="text-white fill-white ml-1" />}
               </button>
             </div>
 
-            {/* Bottom Gradient & Controls */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 120,
-                background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
-              }}
-            />
+            {/* Bottom gradient */}
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0, height: 110,
+              background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)',
+              pointerEvents: 'none',
+            }} />
 
-            {/* Progress Bar - Infinix Green */}
-            <div className="absolute bottom-16 left-4 right-4 pointer-events-auto">
-              <style>{`
-                input[type="range"]::-webkit-slider-thumb {
-                  appearance: none;
-                  width: 12px;
-                  height: 12px;
-                  border-radius: 50%;
-                  background: #00ffa3;
-                  cursor: pointer;
-                  box-shadow: 0 0 8px rgba(0, 255, 163, 0.6);
-                }
-                input[type="range"]::-moz-range-thumb {
-                  width: 12px;
-                  height: 12px;
-                  border-radius: 50%;
-                  background: #00ffa3;
-                  cursor: pointer;
-                  border: none;
-                  box-shadow: 0 0 8px rgba(0, 255, 163, 0.6);
-                }
-              `}</style>
+            {/* Bottom: Progress bar */}
+            <div className="absolute bottom-5 left-5 right-5" style={{ pointerEvents: 'auto' }}>
               <input
                 type="range"
                 min="0"
                 max={duration || 100}
                 value={currentTime}
                 onChange={handleProgressChange}
-                className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
+                className="w-full h-1 rounded-full appearance-none cursor-pointer"
                 style={{
-                  background: `linear-gradient(to right, #00ffa3 0%, #00ffa3 ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.2) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.2) 100%)`,
-                  filter: `drop-shadow(0 0 4px rgba(0, 255, 163, 0.4))`,
+                  background: `linear-gradient(to right, #00ffa3 0%, #00ffa3 ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.25) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255,255,255,0.25) 100%)`,
+                  filter: 'drop-shadow(0 0 4px rgba(0,255,163,0.4))',
                 }}
               />
               <div className="flex justify-between mt-2 text-white/60 text-xs">
@@ -356,55 +369,13 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Buttons Outside Rotated Container */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 210,
-            pointerEvents: 'none',
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s',
-          }}
-        >
-          {/* Back Button - Top Left */}
-          <button
-            onClick={handleBackClick}
-            style={{
-              position: 'absolute',
-              top: 16,
-              left: 16,
-              pointerEvents: 'auto',
-            }}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:border-[#00ffa3]/60 transition-all shadow-[0_0_8px_rgba(0,255,163,0.15)] active:scale-95"
-            title="Exit Fullscreen"
-          >
-            <ChevronLeft size={32} className="text-white" strokeWidth={2.5} />
-          </button>
-
-          {/* Minimize Button - Top Right */}
-          <button
-            onClick={handleFullscreenToggle}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              pointerEvents: 'auto',
-            }}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:border-[#00ffa3]/60 transition-all shadow-[0_0_8px_rgba(0,255,163,0.15)] active:scale-95"
-            title="Exit Fullscreen"
-          >
-            <Minimize2 size={28} className="text-white" />
-          </button>
-        </div>
       </div>
     );
   }
 
   // Regular (portrait) mode
   return (
-    <div 
+    <div
       ref={containerRef}
       className="w-full aspect-video overflow-hidden rounded-xl max-h-[220px] md:max-h-none border-b border-white/10 relative bg-black flex items-center justify-center"
       style={{ boxShadow: '0 8px 30px rgb(0,0,0,0.8)' }}
@@ -422,10 +393,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       />
 
       {/* Custom Controls Overlay */}
-      <div 
-        className={`absolute inset-0 transition-opacity duration-300 ${
-          showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`absolute inset-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         style={{ zIndex: 90 }}
       >
         {/* Top Gradient */}
@@ -455,10 +425,50 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           {/* Fullscreen Button */}
           <button
             onClick={handleFullscreenToggle}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:border-[#00ffa3]/60 transition-all shadow-[0_0_8px_rgba(0,255,163,0.15)] active:scale-95"
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-xl border border-white/30 hover:border-[#00ffa3]/60 transition-all shadow-[0_0_8px_rgba(0,255,163,0.15)] active:scale-95"
             title="Rotate to Fullscreen"
           >
-            <RotateCcw size={24} className="text-white" strokeWidth={2.5} />
+            {/* Rotate-to-landscape icon: phone + circular arrow */}
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 30 30"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Portrait phone body, slightly tilted */}
+              <rect
+                x="11" y="5" width="8" height="14"
+                rx="1.5"
+                stroke="white"
+                strokeWidth="1.8"
+                transform="rotate(-15 15 12)"
+              />
+              {/* Home button dot on phone */}
+              <circle
+                cx="15" cy="17"
+                r="0.9"
+                fill="white"
+                transform="rotate(-15 15 12)"
+              />
+              {/* Large clockwise arc sweeping from top-left to bottom-right */}
+              <path
+                d="M6 10 A10 10 0 1 1 20 24"
+                stroke="#00ffa3"
+                strokeWidth="2"
+                strokeLinecap="round"
+                fill="none"
+              />
+              {/* Arrowhead at end of arc (pointing down-right) */}
+              <polyline
+                points="17,26 20,24 22,27"
+                stroke="#00ffa3"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
           </button>
         </div>
 
