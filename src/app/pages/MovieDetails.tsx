@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { startDownload } from '../../services/DownloadManager';
 import {
   Plus, Share2, Download, ChevronLeft, ChevronDown,
   HelpCircle, Globe, Eye, Play, Pause, Maximize2, PictureInPicture2,
@@ -259,7 +260,7 @@ export function MovieDetails() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { addToHistory } = useUser();
-  const { addDownload, getDownload } = useDownloads();
+  const { addDownload, updateProgress, markFailed, getDownload } = useDownloads();
   const { setIsFullscreen } = useFullscreen();
 
   const [movie, setMovie] = useState<any>(null);
@@ -267,6 +268,8 @@ export function MovieDetails() {
   const [youtubeId, setYoutubeId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<'foryou' | 'comments'>('foryou');
+  // Local download state — tracks this movie's live progress for the button label
+  const [downloadPercent, setDownloadPercent] = useState<number | null>(null);
 
   const displayTitle = getDisplayTitle(id || '');
   const tmdbId = getTMDBId(id || '');
@@ -318,20 +321,63 @@ export function MovieDetails() {
     setIsFullscreen(fs);
     document.body.style.overflow = fs ? 'hidden' : 'auto';
   };
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!movie || !id) return;
+
+    // Guard: already downloading or completed
     const existing = getDownload(id);
     if (existing) {
-      toast.info(existing.status === 'downloading' ? 'Already downloading' : 'Already downloaded');
+      toast.info(existing.status === 'downloading' ? 'Already downloading…' : 'Already downloaded ✓');
       return;
     }
+
+    const movieTitle = displayTitle || movie.title || movie.name || 'movie';
+    const safeFilename = `${movieTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+
+    // Register the entry in global state immediately so Downloads page picks it up
     addDownload({
       id,
-      title: displayTitle || movie.title || movie.name,
+      title: movieTitle,
       backdrop_path: movie.backdrop_path,
       poster_path: movie.poster_path,
     });
+    setDownloadPercent(0);
     toast.success('Download started');
+
+    try {
+      // TODO: Replace MOCK_MP4_URL inside DownloadManager.ts with the real
+      //       YouTube-to-MP4 conversion service URL when available.
+      const result = await startDownload({
+        filename: safeFilename,
+        onProgress: (percent) => {
+          setDownloadPercent(percent);
+          updateProgress(id, percent);
+        },
+      });
+      updateProgress(id, 100, result.path);
+      setDownloadPercent(null);
+      toast.success('Download complete ✓');
+    } catch (err: any) {
+      if (err?.message === 'NATIVE_ONLY') {
+        // Running in browser — simulate progress for UI testing
+        toast.info('Download only works on the device');
+        let p = 0;
+        const interval = setInterval(() => {
+          p = Math.min(p + Math.floor(Math.random() * 12 + 4), 100);
+          setDownloadPercent(p);
+          updateProgress(id, p);
+          if (p >= 100) {
+            clearInterval(interval);
+            setDownloadPercent(null);
+          }
+        }, 600);
+      } else {
+        console.error('[Download] failed:', err);
+        markFailed(id);
+        setDownloadPercent(null);
+        toast.error('Download failed. Please try again.');
+      }
+    }
   };
 
   // ── Loading ──────────────────────────────────────────────────────────────
@@ -461,10 +507,20 @@ export function MovieDetails() {
           </button>
           <button
             onClick={handleDownload}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0"
-            style={pillBtn}
+            disabled={downloadPercent !== null}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-opacity"
+            style={{
+              ...pillBtn,
+              opacity: downloadPercent !== null ? 0.75 : 1,
+              cursor: downloadPercent !== null ? 'not-allowed' : 'pointer',
+            }}
           >
-            <Download size={14} /><span>Download</span>
+            <Download size={14} />
+            <span>
+              {downloadPercent === null
+                ? (getDownload(id ?? '')?.status === 'completed' ? 'Downloaded ✓' : 'Download')
+                : `Downloading ${downloadPercent}%…`}
+            </span>
           </button>
           <button
             onClick={() => navigate('/downloads')}
