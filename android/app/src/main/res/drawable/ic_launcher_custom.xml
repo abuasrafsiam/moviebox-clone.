@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MovieBase Custom Icon - Lightning Bolt -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background: Pure black to match the icon -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#000000"/>
+        </shape>
+    </item>
+    
+    <!-- The lightning bolt icon will be placed here -->
+    <!-- Source: Cyan glowing lightning bolt on black background -->
+    <!-- This references the provided figma asset image -->
+</layer-list>
