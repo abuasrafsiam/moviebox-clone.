@@ -342,7 +342,7 @@ export function MovieDetails() {
       poster_path: movie.poster_path,
     });
     setDownloadPercent(0);
-    toast.success('Download started');
+    toast.info('🔄 Download started — requesting storage access...');
 
     try {
       // TODO: Replace MOCK_MP4_URL inside DownloadManager.ts with the real
@@ -356,11 +356,27 @@ export function MovieDetails() {
       });
       updateProgress(id, 100, result.path);
       setDownloadPercent(null);
-      toast.success('Download complete ✓');
+
+      // ── SUCCESS: Show exact file path to the user ──────────────────────────────
+      const successMessage = `✓ Download complete!\n\nSaved to:\n${result.displayPath}`;
+      console.log('[Download] SUCCESS:', {
+        title: movieTitle,
+        displayPath: result.displayPath,
+        fullPath: result.path,
+        uri: result.uri,
+      });
+      
+      // Show a detailed success toast with the file location
+      toast.success(successMessage, {
+        duration: 6000, // Show longer since it contains important information
+        description: 'Check your Files app to find the downloaded movie.',
+      });
     } catch (err: any) {
       if (err?.message === 'NATIVE_ONLY') {
         // Running in browser — simulate progress for UI testing
-        toast.info('Download only works on the device');
+        toast.info('Download only works on the device', {
+          description: 'Build and run the Android APK to test downloads.',
+        });
         let p = 0;
         const interval = setInterval(() => {
           p = Math.min(p + Math.floor(Math.random() * 12 + 4), 100);
@@ -372,10 +388,39 @@ export function MovieDetails() {
           }
         }, 600);
       } else {
-        console.error('[Download] failed:', err);
+        // ── ERROR: Log comprehensive debug info and show user-friendly message ────
+        console.error('[Download] FAILED:', {
+          movieTitle,
+          filename: safeFilename,
+          errorMessage: err?.message,
+          errorDetail: err,
+        });
+
         markFailed(id);
         setDownloadPercent(null);
-        toast.error('Download failed. Please try again.');
+
+        // Show specific error messages based on the error type
+        let errorMessage = 'Download failed. Please try again.';
+        let errorDescription = '';
+
+        if (err?.message?.includes('PERMISSION_DENIED')) {
+          errorMessage = '⛔ Storage permission denied';
+          errorDescription = 'Grant file access permission in your app settings to download files.';
+        } else if (err?.message?.includes('NETWORK_ERROR')) {
+          errorMessage = '📡 Connection failed';
+          errorDescription = 'Check your internet connection and try again.';
+        } else if (err?.message?.includes('WRITE_FAILED')) {
+          errorMessage = '💾 Storage error';
+          errorDescription = 'Check that your device has enough free space.';
+        } else if (err?.message?.includes('Could not access')) {
+          errorMessage = '📁 Storage access error';
+          errorDescription = 'Unable to access the file system. Try restarting the app.';
+        }
+
+        toast.error(errorMessage, {
+          description: errorDescription,
+          duration: 5000,
+        });
       }
     }
   };

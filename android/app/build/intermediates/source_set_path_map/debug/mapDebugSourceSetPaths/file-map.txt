@@ -1,0 +1,39 @@
+com.moviebase.app-jetified-startup-runtime-1.1.1-0 C:\Users\Admin\.gradle\caches\8.13\transforms\0007cfe0f4b7ad24be4582c733820375\transformed\jetified-startup-runtime-1.1.1\res
+com.moviebase.app-lifecycle-livedata-2.6.2-1 C:\Users\Admin\.gradle\caches\8.13\transforms\082aa998754fe29c85ab97f8d6408771\transformed\lifecycle-livedata-2.6.2\res
+com.moviebase.app-core-1.15.0-2 C:\Users\Admin\.gradle\caches\8.13\transforms\10685f791e60cd7108a360ff67471270\transformed\core-1.15.0\res
+com.moviebase.app-jetified-emoji2-views-helper-1.2.0-3 C:\Users\Admin\.gradle\caches\8.13\transforms\1307af034b801091b29c4a4159bc7d15\transformed\jetified-emoji2-views-helper-1.2.0\res
+com.moviebase.app-coordinatorlayout-1.2.0-4 C:\Users\Admin\.gradle\caches\8.13\transforms\140a18fe631907c3c0a2e19ca00f9962\transformed\coordinatorlayout-1.2.0\res
+com.moviebase.app-jetified-activity-ktx-1.10.1-5 C:\Users\Admin\.gradle\caches\8.13\transforms\23f68a435a6d8cc457f3ffab9fa8186a\transformed\jetified-activity-ktx-1.10.1\res
+com.moviebase.app-jetified-savedstate-ktx-1.2.1-6 C:\Users\Admin\.gradle\caches\8.13\transforms\30c789925ec6119bda79788a81e340be\transformed\jetified-savedstate-ktx-1.2.1\res
+com.moviebase.app-jetified-activity-1.10.1-7 C:\Users\Admin\.gradle\caches\8.13\transforms\521b6f0caa59ff40b78e5dda4156e3e8\transformed\jetified-activity-1.10.1\res
+com.moviebase.app-jetified-appcompat-resources-1.6.1-8 C:\Users\Admin\.gradle\caches\8.13\transforms\5295f86b6c9441d4a3177bbed27c033f\transformed\jetified-appcompat-resources-1.6.1\res
+com.moviebase.app-jetified-lifecycle-viewmodel-savedstate-2.6.2-9 C:\Users\Admin\.gradle\caches\8.13\transforms\5ed44e8d73b489d5070ec66a75624459\transformed\jetified-lifecycle-viewmodel-savedstate-2.6.2\res
+com.moviebase.app-webkit-1.9.0-10 C:\Users\Admin\.gradle\caches\8.13\transforms\71022b3559cfa2082dac5f5d2714478e\transformed\webkit-1.9.0\res
+com.moviebase.app-jetified-core-splashscreen-1.0.1-11 C:\Users\Admin\.gradle\caches\8.13\transforms\7a72c934dba845e83f18fc67e7af1299\transformed\jetified-core-splashscreen-1.0.1\res
+com.moviebase.app-jetified-lifecycle-process-2.6.2-12 C:\Users\Admin\.gradle\caches\8.13\transforms\7da6ebcc9b13f7b1c6c65cc9933d85f9\transformed\jetified-lifecycle-process-2.6.2\res
+com.moviebase.app-lifecycle-viewmodel-2.6.2-13 C:\Users\Admin\.gradle\caches\8.13\transforms\81248ccc5129de62ccd03c9d69e0dbff\transformed\lifecycle-viewmodel-2.6.2\res
+com.moviebase.app-jetified-lifecycle-runtime-ktx-2.6.2-14 C:\Users\Admin\.gradle\caches\8.13\transforms\8987619dea313c872265a43e96c19156\transformed\jetified-lifecycle-runtime-ktx-2.6.2\res
+com.moviebase.app-jetified-profileinstaller-1.4.0-15 C:\Users\Admin\.gradle\caches\8.13\transforms\8a086e4184171c672e0bbef10e5a7526\transformed\jetified-profileinstaller-1.4.0\res
+com.moviebase.app-jetified-core-viewtree-1.0.0-16 C:\Users\Admin\.gradle\caches\8.13\transforms\aa5f14a4f903284a7864afcdde909c2a\transformed\jetified-core-viewtree-1.0.0\res
+com.moviebase.app-jetified-savedstate-1.2.1-17 C:\Users\Admin\.gradle\caches\8.13\transforms\b53540ab2d9bd976c0604de05b7911b4\transformed\jetified-savedstate-1.2.1\res
+com.moviebase.app-appcompat-1.6.1-18 C:\Users\Admin\.gradle\caches\8.13\transforms\b6440ade9122b8e3c15dfb9a269a7a09\transformed\appcompat-1.6.1\res
+com.moviebase.app-jetified-annotation-experimental-1.4.1-19 C:\Users\Admin\.gradle\caches\8.13\transforms\c76da6dff6d5dbdc5dad0e0f4b33108b\transformed\jetified-annotation-experimental-1.4.1\res
+com.moviebase.app-fragment-1.6.2-20 C:\Users\Admin\.gradle\caches\8.13\transforms\cc42f108dadb6c14e331bd3a491abbc5\transformed\fragment-1.6.2\res
+com.moviebase.app-core-runtime-2.2.0-21 C:\Users\Admin\.gradle\caches\8.13\transforms\da4013f117181753b4373f9c4c4fcca1\transformed\core-runtime-2.2.0\res
+com.moviebase.app-jetified-core-ktx-1.15.0-22 C:\Users\Admin\.gradle\caches\8.13\transforms\eee05d2b1f7adcb3cadfc3ad27c496cf\transformed\jetified-core-ktx-1.15.0\res
+com.moviebase.app-jetified-lifecycle-viewmodel-ktx-2.6.2-23 C:\Users\Admin\.gradle\caches\8.13\transforms\f05fde82215db8a47e4c4f99bc587125\transformed\jetified-lifecycle-viewmodel-ktx-2.6.2\res
+com.moviebase.app-jetified-emoji2-1.2.0-24 C:\Users\Admin\.gradle\caches\8.13\transforms\f108938112cbe6b8e59b3e1c5b3fc503\transformed\jetified-emoji2-1.2.0\res
+com.moviebase.app-lifecycle-livedata-core-2.6.2-25 C:\Users\Admin\.gradle\caches\8.13\transforms\f2cf5f0edba16a9f6c73da6e9d2fb300\transformed\lifecycle-livedata-core-2.6.2\res
+com.moviebase.app-jetified-tracing-1.2.0-26 C:\Users\Admin\.gradle\caches\8.13\transforms\fa38ee4a4e44eef74557e23d06ca562c\transformed\jetified-tracing-1.2.0\res
+com.moviebase.app-lifecycle-runtime-2.6.2-27 C:\Users\Admin\.gradle\caches\8.13\transforms\fd1ee558f960b2e869048b3254947fa0\transformed\lifecycle-runtime-2.6.2\res
+com.moviebase.app-pngs-28 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\build\generated\res\pngs\debug
+com.moviebase.app-resValues-29 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\build\generated\res\resValues\debug
+com.moviebase.app-updated_navigation_xml-30 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\build\generated\updated_navigation_xml\debug
+com.moviebase.app-packageDebugResources-31 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.moviebase.app-packageDebugResources-32 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.moviebase.app-debug-33 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.moviebase.app-debug-34 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\src\debug\res
+com.moviebase.app-main-35 D:\MovieBase Files\MovieboxappuicloneFigma\android\app\src\main\res
+com.moviebase.app-debug-36 D:\MovieBase Files\MovieboxappuicloneFigma\node_modules\@capacitor\android\capacitor\build\intermediates\packaged_res\debug\packageDebugResources
+com.moviebase.app-debug-37 D:\MovieBase Files\MovieboxappuicloneFigma\node_modules\@capacitor\file-transfer\android\build\intermediates\packaged_res\debug\packageDebugResources
+com.moviebase.app-debug-38 D:\MovieBase Files\MovieboxappuicloneFigma\node_modules\@capacitor\filesystem\android\build\intermediates\packaged_res\debug\packageDebugResources

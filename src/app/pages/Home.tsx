@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { NotificationDrawer } from '../components/NotificationDrawer';
 import { FEATURED_HOME_IDS } from '../data/movie-data';
+import strangerThingsBanner from '../../assets/images/Picsart_26-02-19_21-17-57-614.png';
 
 export const Home = () => {
   const { unreadCount } = useUser();
@@ -142,7 +143,7 @@ export const Home = () => {
       <div className="relative w-full h-[300px] overflow-hidden bg-gray-950">
         {/* Stranger Things — Local Asset */}
         <img
-          src="\assets\images\Picsart_26-02-19_21-17-57-614.png"
+          src={strangerThingsBanner}
           className="absolute inset-0 w-full h-full object-cover opacity-100"
           alt="Stranger Things"
         />
