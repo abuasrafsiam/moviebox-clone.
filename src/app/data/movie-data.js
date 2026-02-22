@@ -1,6 +1,6 @@
 /**
  * MovieBase — Curated Western Sci-Fi & Action Streaming Library
- * Flattened structure: each entry = one streamable title + YouTube trailer ID
+ * Multi-Source resolver engine - TMDB IDs only
  */
 
 export const movieStreams = {
@@ -8,35 +8,30 @@ export const movieStreams = {
   // ── Stranger Things (all seasons as standalone entries) ──────────────────
   "st-season-1": {
     type: "tv",
-    youtubeId: "mhhXKE9WoWA",
     title: "Stranger Things Season 1",
     tmdbId: "66732",
     posterPath: "/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg"
   },
   "st-season-2": {
     type: "tv",
-    youtubeId: "V7EUMR4KBSQ",
     title: "Stranger Things Season 2",
     tmdbId: "66732",
     posterPath: "/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg"
   },
   "st-season-3": {
     type: "tv",
-    youtubeId: "Wu_6ekD4SRc",
     title: "Stranger Things Season 3",
     tmdbId: "66732",
     posterPath: "/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg"
   },
   "st-season-4": {
     type: "tv",
-    youtubeId: "oBkB6H2Lbkk",
     title: "Stranger Things Season 4",
     tmdbId: "66732",
     posterPath: "/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg"
   },
   "st-season-5": {
     type: "tv",
-    youtubeId: "Wu_6ekD4SRc",
     title: "Stranger Things Season 5",
     tmdbId: "66732",
     posterPath: "/x2LSRK2Cm7MZhjluni1msVJ3wDF.jpg"
@@ -45,140 +40,140 @@ export const movieStreams = {
   // ── Primate (Home banner) ─────────────────────────────────────────────────
   "371608": {
     type: "movie",
-    youtubeId: "k-D9F6bX400",
-    title: "Primate"
+    title: "Primate",
+    tmdbId: "371608"
   },
 
   // ── Sci-Fi Classics ───────────────────────────────────────────────────────
   "27205": {
     type: "movie",
-    youtubeId: "YoHD9XEInc0",
-    title: "Inception"
+    title: "Inception",
+    tmdbId: "27205"
   },
   "157336": {
     type: "movie",
-    youtubeId: "zSWdZVtXT7E",
-    title: "Interstellar"
+    title: "Interstellar",
+    tmdbId: "157336"
   },
   "438631": {
     type: "movie",
-    youtubeId: "8g18jFHCLXk",
-    title: "Dune: Part One"
+    title: "Dune: Part One",
+    tmdbId: "438631"
   },
   "693134": {
     type: "movie",
-    youtubeId: "Way9Dexny3w",
-    title: "Dune: Part Two"
+    title: "Dune: Part Two",
+    tmdbId: "693134"
   },
   "603": {
     type: "movie",
-    youtubeId: "vKQi3bBA1y8",
-    title: "The Matrix"
+    title: "The Matrix",
+    tmdbId: "603"
   },
   "577922": {
     type: "movie",
-    youtubeId: "L3pk_TBkihU",
-    title: "Tenet"
+    title: "Tenet",
+    tmdbId: "577922"
   },
   "335984": {
     type: "movie",
-    youtubeId: "gCcx85zWUXQ",
-    title: "Blade Runner 2049"
+    title: "Blade Runner 2049",
+    tmdbId: "335984"
   },
   "155": {
     type: "movie",
-    youtubeId: "lNLmk7CPtOw&pp",
-    title: "The Dark Knight"
+    title: "The Dark Knight",
+    tmdbId: "155"
   },
   "414906": {
     type: "movie",
-    youtubeId: "mqqft2x_Aa4",
-    title: "The Batman"
+    title: "The Batman",
+    tmdbId: "414906"
   },
   "329865": {
     type: "movie",
-    youtubeId: "tFMo3UJ4B4g",
-    title: "Arrival"
+    title: "Arrival",
+    tmdbId: "329865"
   },
   "264660": {
     type: "movie",
-    youtubeId: "bggUmgeMCDc",
-    title: "Ex Machina"
+    title: "Ex Machina",
+    tmdbId: "264660"
   },
   "545611": {
     type: "movie",
-    youtubeId: "wxN1T1uxQ2g",
-    title: "Everything Everywhere All At Once"
+    title: "Everything Everywhere All At Once",
+    tmdbId: "545611"
   },
   "286217": {
     type: "movie",
-    youtubeId: "ej3ioOneTy8",
-    title: "The Martian"
+    title: "The Martian",
+    tmdbId: "286217"
   },
   "137113": {
     type: "movie",
-    youtubeId: "vw61gCe2oqI",
-    title: "Edge of Tomorrow"
+    title: "Edge of Tomorrow",
+    tmdbId: "137113"
   },
   "324857": {
     type: "movie",
-    youtubeId: "g4Hbz2jLxvQ",
-    title: "Spider-Man: Into the Spider-Verse"
+    title: "Spider-Man: Into the Spider-Verse",
+    tmdbId: "324857"
   },
   "569094": {
     type: "movie",
-    youtubeId: "shW9i6k8cB0",
-    title: "Spider-Man: Across the Spider-Verse"
+    title: "Spider-Man: Across the Spider-Verse",
+    tmdbId: "569094"
   },
   "118340": {
     type: "movie",
-    youtubeId: "d96cjJhvlMA",
-    title: "Guardians of the Galaxy"
+    title: "Guardians of the Galaxy",
+    tmdbId: "118340"
   },
   "17654": {
     type: "movie",
-    youtubeId: "DyLUwOcR5pk",
-    title: "District 9"
+    title: "District 9",
+    tmdbId: "17654"
   },
   "9693": {
     type: "movie",
-    youtubeId: "2VT2apoX9dg",
-    title: "Children of Men"
+    title: "Children of Men",
+    tmdbId: "9693"
   },
   "59967": {
     type: "movie",
-    youtubeId: "2iQuhsmtfHw",
-    title: "Looper"
+    title: "Looper",
+    tmdbId: "59967"
   },
   "180": {
     type: "movie",
-    youtubeId: "lG7D4TGiSko",
-    title: "Minority Report"
+    title: "Minority Report",
+    tmdbId: "180"
   },
   "18": {
     type: "movie",
-    youtubeId: "fQ9RqgcZ24g",
-    title: "The Fifth Element"
+    title: "The Fifth Element",
+    tmdbId: "18"
   },
   "686": {
     type: "movie",
-    youtubeId: "SRoO8m95Huc",
-    title: "Contact"
+    title: "Contact",
+    tmdbId: "686"
   },
   "13475": {
     type: "movie",
-    youtubeId: "iGAHnLhzvS0",
-    title: "Star Trek (2009)"
+    title: "Star Trek (2009)",
+    tmdbId: "13475"
   },
   "37686": {
     type: "movie",
-    youtubeId: "tCRQQCKS7go",
-    title: "Super 8"
+    title: "Super 8",
+    tmdbId: "37686"
   },
   "5598": {
     type: "movie",
-    youtubeId: "nwRMa1RNDI",
-    title: "Kingdom of Heaven"
+    title: "Kingdom of Heaven",
+    tmdbId: "5598"
   }
 };
 
@@ -200,12 +195,6 @@ export const FEATURED_HOME_IDS = [
 ];
 
 // ── Helper functions ───────────────────────────────────────────────────────
-
-/** Get YouTube trailer ID */
-export const getYouTubeId = (id) => {
-  const entry = movieStreams[String(id)];
-  return entry?.youtubeId;
-};
 
 /** Get display title */
 export const getDisplayTitle = (id) => {

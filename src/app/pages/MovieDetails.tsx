@@ -12,12 +12,25 @@ import { useDownloads } from '../context/DownloadContext';
 import { useFullscreen } from '../context/FullscreenContext';
 import { toast } from 'sonner';
 import { MovieCard } from '../components/MovieCard';
+import { MP4Player } from '../components/MP4Player';
 import {
+  universalMovieResolver,
   getDisplayTitle,
   getTMDBId,
   getMediaType,
   isAvailable,
-} from '../data/movie-data';
+  lockToLandscape,
+  unlockOrientation,
+  generateSafeFilename,
+  getUsingFallback,
+  setUsingFallback,
+  multiSourceResolver,
+  switchServer,
+  getCurrentSourceIndex,
+  setCurrentSourceIndex,
+  openDownloadInBrowser,
+  logMovieDataValidation,
+} from '../services/UniversalMovieEngine';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const formatTime = (seconds: number): string => {
@@ -30,227 +43,22 @@ const formatTime = (seconds: number): string => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
-// ── YouTubePlayer (IFrame API + custom controls) ─────────────────────────────
-const YouTubePlayer = ({
-  youtubeId,
-  onBack,
-  title,
-  onFullscreenChange,
-}: {
-  youtubeId: string;
-  onBack: () => void;
-  title?: string;
-  onFullscreenChange?: (fs: boolean) => void;
-}) => {
-  const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [showControls, setShowControls] = useState(true);
+/**
+ * ENTERPRISE MULTI-SOURCE ENGINE RESOLVER
+ * 100% Dynamic - constructs URL using multi-source matrix with tmdb_id injection
+ * Includes Inception test bypass for isolated testing
+ */
+const resolvePlayUrl = (movieId: string): string => {
+  // ── INCEPTION TEST: Bypass all existing links for Inception ─────────────────────
+  const movieTitle = getDisplayTitle(movieId);
+  if (movieTitle?.toLowerCase().trim() === 'inception') {
+    console.log('[Play] INCEPTION TEST: Using direct video URL');
+    return 'https://cool.upera.in/1400-2/11-1/stranger-things/s3/Stranger.Things.S03E01.1080p.WEB-DL.SoftSub.RasaMovie.Com.mkv';
+  }
 
-  const playerRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const playerDivRef = useRef<HTMLDivElement>(null);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Auto-hide controls after 3.5 s
-  const resetHideTimer = () => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = setTimeout(() => setShowControls(false), 3500);
-  };
-  const revealControls = () => {
-    setShowControls(true);
-    resetHideTimer();
-  };
-
-  useEffect(() => {
-    const initPlayer = () => {
-      if (!playerDivRef.current) return;
-      playerRef.current = new (window as any).YT.Player(playerDivRef.current, {
-        videoId: youtubeId,
-        playerVars: {
-          autoplay: 1, controls: 0, modestbranding: 1,
-          rel: 0, showinfo: 0, iv_load_policy: 3,
-          disablekb: 1, fs: 0, playsinline: 1,
-        },
-        events: {
-          onReady: (e: any) => {
-            e.target.playVideo();
-            setDuration(e.target.getDuration());
-          },
-          onStateChange: (e: any) => {
-            const YT = (window as any).YT;
-            if (e.data === YT.PlayerState.PLAYING) {
-              setPlaying(true);
-              if (!progressTimerRef.current) {
-                progressTimerRef.current = setInterval(() => {
-                  if (playerRef.current?.getCurrentTime) {
-                    setCurrentTime(playerRef.current.getCurrentTime());
-                    setDuration(playerRef.current.getDuration());
-                  }
-                }, 500);
-              }
-            } else {
-              setPlaying(false);
-              if (progressTimerRef.current) {
-                clearInterval(progressTimerRef.current);
-                progressTimerRef.current = null;
-              }
-            }
-          },
-        },
-      });
-    };
-
-    if ((window as any).YT?.Player) {
-      initPlayer();
-    } else {
-      if (!document.getElementById('yt-api-script')) {
-        const tag = document.createElement('script');
-        tag.id = 'yt-api-script';
-        tag.src = 'https://www.youtube.com/iframe_api';
-        document.head.appendChild(tag);
-      }
-      (window as any).onYouTubeIframeAPIReady = initPlayer;
-    }
-
-    // Show controls on mount then auto-hide
-    setShowControls(true);
-    hideTimerRef.current = setTimeout(() => setShowControls(false), 3500);
-
-    return () => {
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-      if (playerRef.current?.destroy) playerRef.current.destroy();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [youtubeId]);
-
-  const togglePlay = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!playerRef.current) return;
-    playing ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
-    revealControls();
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    if (!playerRef.current || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const seekTo = ratio * duration;
-    playerRef.current.seekTo(seekTo, true);
-    setCurrentTime(seekTo);
-    revealControls();
-  };
-
-  const handleFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen?.();
-      onFullscreenChange?.(true);
-    } else {
-      document.exitFullscreen?.();
-      onFullscreenChange?.(false);
-    }
-    revealControls();
-  };
-
-  const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative w-full bg-black overflow-hidden select-none"
-      style={{ aspectRatio: '16 / 9' }}
-      onClick={revealControls}
-    >
-      {/* YouTube IFrame API placeholder */}
-      <div
-        ref={playerDivRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ pointerEvents: 'none' }}
-      />
-
-      {/* Controls overlay — fade in/out */}
-      <div
-        className="absolute inset-0 flex flex-col justify-between"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(0,0,0,.5) 0%, transparent 28%, transparent 62%, rgba(0,0,0,.75) 100%)',
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? 'auto' : 'none',
-          transition: 'opacity 0.3s ease',
-        }}
-      >
-        {/* ── Top row: Back  ·  Help ── */}
-        <div className="flex items-start justify-between px-4 pt-4">
-          <button
-            onClick={(e) => { e.stopPropagation(); onBack(); }}
-            className="w-10 h-10 flex items-center justify-center"
-          >
-            <ChevronLeft size={30} className="text-white" strokeWidth={2.5} />
-          </button>
-
-          <div className="flex flex-col items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-            <div className="w-8 h-8 border-2 border-white/80 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold leading-none">?</span>
-            </div>
-            <span className="text-white/80 text-[9px] tracking-wide">Help</span>
-          </div>
-        </div>
-
-        {/* ── Bottom control bar ── */}
-        <div className="px-3 pb-3 flex items-center gap-2.5">
-          {/* Play / Pause */}
-          <button onClick={togglePlay} className="flex-shrink-0 text-white">
-            {playing
-              ? <Pause size={20} fill="white" />
-              : <Play size={20} fill="white" />}
-          </button>
-
-          {/* Progress track + timestamps */}
-          <div className="flex-1 flex items-center gap-2 min-w-0">
-            <div
-              className="flex-1 h-[3px] bg-white/30 rounded-full relative cursor-pointer"
-              onClick={handleSeek}
-            >
-              {/* Filled */}
-              <div
-                className="absolute inset-y-0 left-0 bg-white rounded-full"
-                style={{ width: `${progress}%` }}
-              />
-              {/* Scrubber dot */}
-              <div
-                className="absolute w-3 h-3 bg-white rounded-full shadow"
-                style={{
-                  left: `calc(${progress}% - 6px)`,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                }}
-              />
-            </div>
-            <span className="text-white text-[10px] whitespace-nowrap flex-shrink-0 font-mono">
-              {formatTime(currentTime)}/{formatTime(duration)}
-            </span>
-          </div>
-
-          {/* PiP */}
-          <button
-            onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 text-white"
-          >
-            <PictureInPicture2 size={18} />
-          </button>
-
-          {/* Fullscreen */}
-          <button onClick={handleFullscreen} className="flex-shrink-0 text-white">
-            <Maximize2 size={18} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  // ── ENTERPRISE MULTI-SOURCE RESOLVER: Use dynamic TMDB ID for every movie ───────────────────
+  const embedUrl = multiSourceResolver(movieId);
+  return embedUrl;
 };
 
 // ── Main MovieDetails ────────────────────────────────────────────────────────
@@ -265,11 +73,13 @@ export function MovieDetails() {
 
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [youtubeId, setYoutubeId] = useState<string | null>(null);
+  const [playUrl, setPlayUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<'foryou' | 'comments'>('foryou');
   // Local download state — tracks this movie's live progress for the button label
   const [downloadPercent, setDownloadPercent] = useState<number | null>(null);
+  // Multi-source state for server switching
+  const [currentServerIndex, setCurrentServerIndex] = useState(getCurrentSourceIndex());
 
   const displayTitle = getDisplayTitle(id || '');
   const tmdbId = getTMDBId(id || '');
@@ -279,6 +89,9 @@ export function MovieDetails() {
   const available = isAvailable(id || '');
 
   useEffect(() => {
+    // Run one-time data validation log
+    logMovieDataValidation();
+    
     const fetchData = async () => {
       if (!tmdbId) return;
       try {
@@ -288,15 +101,15 @@ export function MovieDetails() {
             : await tmdb.getMovieDetails(tmdbId);
         setMovie(data);
 
-        const trailerId = await tmdb.resolveYouTubeId(
-          tmdbId,
-          displayTitle || data.title || data.name,
-          mediaType as 'movie' | 'tv',
-        );
-        setYoutubeId(trailerId);
+        // ── ENTERPRISE MULTI-SOURCE RESOLVER: Use dynamic TMDB ID for every movie ─────────────────
+        const movieTitle = displayTitle || data.title || data.name || 'movie';
+        console.log('[MovieDetails] Movie loaded:', { id, movieTitle });
+        
+        const iframeUrl = resolvePlayUrl(id || '');
+        setPlayUrl(iframeUrl);
 
         if (user) addToHistory({ ...data, media_type: mediaType });
-        if (available && trailerId) setIsPlaying(true);
+        if (available && iframeUrl) setIsPlaying(true);
       } catch (err) {
         console.error('Error fetching details:', err);
       } finally {
@@ -307,121 +120,110 @@ export function MovieDetails() {
     window.scrollTo(0, 0);
   }, [tmdbId, user, addToHistory, mediaType, available, displayTitle]);
 
-  // Always restore BottomNav + body scroll when leaving this page
+  // Always restore BottomNav + body scroll and unlock orientation when leaving this page
   useEffect(() => {
     return () => {
       setIsFullscreen(false);
       document.body.style.overflow = 'auto';
+      unlockOrientation().catch(console.warn);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleBack = () => navigate(-1);
-  const handleFullscreenChange = (fs: boolean) => {
+  const handleBack = async () => {
+    // Unlock orientation when going back from player
+    await unlockOrientation();
+    navigate(-1);
+  };
+  
+  const handleFullscreenChange = async (fs: boolean) => {
     setIsFullscreen(fs);
     document.body.style.overflow = fs ? 'hidden' : 'auto';
+    
+    // Handle orientation based on fullscreen state
+    if (fs) {
+      await lockToLandscape();
+    } else {
+      await unlockOrientation();
+    }
   };
+  
+  // Handle player errors for automatic fallback
+  const handlePlayerError = () => {
+    console.log('[MovieDetails] Player error detected, triggering fallback');
+    // The MP4Player component will handle the actual fallback logic
+  };
+
+  // Server Switch Handler - Cycles through available streaming sources
+  const handleServerSwitch = () => {
+    switchServer();
+    const newIndex = getCurrentSourceIndex();
+    setCurrentServerIndex(newIndex);
+    
+    // Update play URL with new source
+    if (id) {
+      const newUrl = resolvePlayUrl(id);
+      setPlayUrl(newUrl);
+      
+      // If currently playing, restart with new source
+      if (isPlaying) {
+        setIsPlaying(false);
+        setTimeout(() => setIsPlaying(true), 100);
+      }
+    }
+    
+    toast.info(`Switched to Server ${newIndex + 1}/4`, {
+      description: 'Trying next streaming source...',
+    });
+  };
+
+  // Universal Play handler - locks orientation and starts playback
+  const handlePlayClick = async () => {
+    console.log('[Play Click] Movie ID:', id);
+    console.log('[Play Click] Movie Title:', displayTitle);
+    console.log('[Play Click] URL to stream:', playUrl);
+    
+    // Lock to landscape when player opens
+    await lockToLandscape();
+    setIsPlaying(true);
+  };
+  
   const handleDownload = async () => {
     if (!movie || !id) return;
 
-    // Guard: already downloading or completed
-    const existing = getDownload(id);
-    if (existing) {
-      toast.info(existing.status === 'downloading' ? 'Already downloading…' : 'Already downloaded ✓');
-      return;
-    }
-
     const movieTitle = displayTitle || movie.title || movie.name || 'movie';
-    const safeFilename = `${movieTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
-
-    // Register the entry in global state immediately so Downloads page picks it up
-    addDownload({
-      id,
-      title: movieTitle,
-      backdrop_path: movie.backdrop_path,
-      poster_path: movie.poster_path,
-    });
-    setDownloadPercent(0);
-    toast.info('🔄 Download started — requesting storage access...');
-
+    
     try {
-      // TODO: Replace MOCK_MP4_URL inside DownloadManager.ts with the real
-      //       YouTube-to-MP4 conversion service URL when available.
-      const result = await startDownload({
-        filename: safeFilename,
-        onProgress: (percent) => {
-          setDownloadPercent(percent);
-          updateProgress(id, percent);
-        },
-      });
-      updateProgress(id, 100, result.path);
-      setDownloadPercent(null);
-
-      // ── SUCCESS: Show exact file path to the user ──────────────────────────────
-      const successMessage = `✓ Download complete!\n\nSaved to:\n${result.displayPath}`;
-      console.log('[Download] SUCCESS:', {
-        title: movieTitle,
-        displayPath: result.displayPath,
-        fullPath: result.path,
-        uri: result.uri,
-      });
+      // ── ENTERPRISE DOWNLOAD RESOLVER: Use Capacitor Browser for native download ─────────────
+      await openDownloadInBrowser(id);
       
-      // Show a detailed success toast with the file location
-      toast.success(successMessage, {
-        duration: 6000, // Show longer since it contains important information
-        description: 'Check your Files app to find the downloaded movie.',
+      toast.success('📱 Download opened in browser', {
+        description: 'Use the native Android download button in the browser to save the video.',
+        duration: 5000,
       });
     } catch (err: any) {
-      if (err?.message === 'NATIVE_ONLY') {
-        // Running in browser — simulate progress for UI testing
-        toast.info('Download only works on the device', {
-          description: 'Build and run the Android APK to test downloads.',
-        });
-        let p = 0;
-        const interval = setInterval(() => {
-          p = Math.min(p + Math.floor(Math.random() * 12 + 4), 100);
-          setDownloadPercent(p);
-          updateProgress(id, p);
-          if (p >= 100) {
-            clearInterval(interval);
-            setDownloadPercent(null);
-          }
-        }, 600);
-      } else {
-        // ── ERROR: Log comprehensive debug info and show user-friendly message ────
-        console.error('[Download] FAILED:', {
-          movieTitle,
-          filename: safeFilename,
-          errorMessage: err?.message,
-          errorDetail: err,
-        });
+      console.error('[Download] FAILED:', {
+        movieTitle,
+        errorMessage: err?.message,
+        errorDetail: err,
+      });
 
-        markFailed(id);
-        setDownloadPercent(null);
+      // Show specific error messages based on the error type
+      let errorMessage = 'Download failed. Please try again.';
+      let errorDescription = '';
 
-        // Show specific error messages based on the error type
-        let errorMessage = 'Download failed. Please try again.';
-        let errorDescription = '';
-
-        if (err?.message?.includes('PERMISSION_DENIED')) {
-          errorMessage = '⛔ Storage permission denied';
-          errorDescription = 'Grant file access permission in your app settings to download files.';
-        } else if (err?.message?.includes('NETWORK_ERROR')) {
-          errorMessage = '📡 Connection failed';
-          errorDescription = 'Check your internet connection and try again.';
-        } else if (err?.message?.includes('WRITE_FAILED')) {
-          errorMessage = '💾 Storage error';
-          errorDescription = 'Check that your device has enough free space.';
-        } else if (err?.message?.includes('Could not access')) {
-          errorMessage = '📁 Storage access error';
-          errorDescription = 'Unable to access the file system. Try restarting the app.';
-        }
-
-        toast.error(errorMessage, {
-          description: errorDescription,
-          duration: 5000,
-        });
+      if (err?.message?.includes('No download URL available')) {
+        errorMessage = '⛔ No streaming source available';
+        errorDescription = 'Try switching to a different server and try again.';
+      } else if (err?.message?.includes('Browser')) {
+        errorMessage = '� Browser error';
+        errorDescription = 'Unable to open browser. Check your device settings.';
       }
+
+      toast.error(errorMessage, {
+        description: errorDescription,
+        duration: 5000,
+      });
     }
   };
 
@@ -458,6 +260,10 @@ export function MovieDetails() {
     movie.origin_country?.[0] ||
     'United States';
 
+  // Check if movie has missing data for 'Content Coming Soon' overlay
+  const hasMissingData = !title || title === 'Unknown' || title === 'MISSING';
+  const hasValidPlayUrl = playUrl && playUrl !== '';
+
   // ── Shared pill button style ─────────────────────────────────────────────
   const pillBtn: React.CSSProperties = {
     border: '1px solid #4B5563',
@@ -480,12 +286,15 @@ export function MovieDetails() {
           </button>
         )}
 
-        {available && isPlaying && youtubeId ? (
-          <YouTubePlayer
-            youtubeId={youtubeId}
+        {available && isPlaying && playUrl && !hasMissingData ? (
+          <MP4Player
+            source={playUrl}
             onBack={handleBack}
             title={title}
             onFullscreenChange={handleFullscreenChange}
+            onError={handlePlayerError}
+            onServerSwitch={handleServerSwitch}
+            currentServerIndex={currentServerIndex}
           />
         ) : (
           <div className="relative w-full" style={{ aspectRatio: '16 / 9' }}>
@@ -494,10 +303,20 @@ export function MovieDetails() {
               className="w-full h-full object-cover"
               alt={title}
             />
-            {available ? (
+            {hasMissingData ? (
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Play size={28} className="text-white/60" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Content Coming Soon</h3>
+                  <p className="text-gray-400 text-sm">This content is not yet available for streaming</p>
+                </div>
+              </div>
+            ) : available ? (
               <div
                 className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer"
-                onClick={() => setIsPlaying(true)}
+                onClick={handlePlayClick}
               >
                 <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 transition-transform">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="black">
@@ -552,20 +371,24 @@ export function MovieDetails() {
           </button>
           <button
             onClick={handleDownload}
-            disabled={downloadPercent !== null}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-opacity"
+            style={pillBtn}
+          >
+            <Download size={14} />
+            <span>Download</span>
+          </button>
+          <button
+            onClick={handleServerSwitch}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-opacity"
             style={{
               ...pillBtn,
-              opacity: downloadPercent !== null ? 0.75 : 1,
-              cursor: downloadPercent !== null ? 'not-allowed' : 'pointer',
+              background: 'rgba(0, 255, 204, 0.1)',
+              borderColor: '#00FFCC',
+              color: '#00FFCC',
             }}
           >
-            <Download size={14} />
-            <span>
-              {downloadPercent === null
-                ? (getDownload(id ?? '')?.status === 'completed' ? 'Downloaded ✓' : 'Download')
-                : `Downloading ${downloadPercent}%…`}
-            </span>
+            <Globe size={14} />
+            <span>Server {currentServerIndex + 1}/4</span>
           </button>
           <button
             onClick={() => navigate('/downloads')}

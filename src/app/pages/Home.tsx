@@ -5,7 +5,8 @@ import { MovieCard } from '../components/MovieCard';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { NotificationDrawer } from '../components/NotificationDrawer';
-import { FEATURED_HOME_IDS } from '../data/movie-data';
+import { FEATURED_HOME_IDS, unlockOrientation } from '../services/UniversalMovieEngine';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
 import strangerThingsBanner from '../../assets/images/Picsart_26-02-19_21-17-57-614.png';
 
 export const Home = () => {
@@ -74,6 +75,23 @@ export const Home = () => {
     loadGrid();
   }, []);
 
+  // ── Ensure Home is always in Portrait mode ───────────────────────────────────
+  useEffect(() => {
+    const ensurePortrait = async () => {
+      try {
+        await ScreenOrientation.lock({ orientation: 'portrait' });
+        console.log('[Home] Locked to portrait orientation');
+      } catch (error) {
+        console.warn('[Home] Failed to lock portrait orientation:', error);
+      }
+    };
+    ensurePortrait();
+
+    // Cleanup: unlock orientation when leaving
+    return () => {
+      unlockOrientation().catch(console.warn);
+    };
+  }, []);
 
 
   // ── Category change ───────────────────────────────────────────────────────

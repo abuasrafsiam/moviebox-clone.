@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { tmdb } from '../utils/tmdb';
 import { useUser } from '../context/UserContext';
 import { MovieCard } from '../components/MovieCard';
-import { searchLibrary, getTMDBId } from '../data/movie-data';
+import { searchLibrary, getTMDBId } from '../services/UniversalMovieEngine';
 
 export const Search = () => {
   const navigate = useNavigate();

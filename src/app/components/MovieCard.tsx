@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { tmdb } from '../utils/tmdb';
-import { isAvailable } from '../data/movie-data';
+import { isAvailable } from '../services/UniversalMovieEngine';
 import { CheckCircle2 } from 'lucide-react';
 
 interface MovieCardProps {
@@ -23,7 +23,7 @@ export const MovieCard: React.FC<MovieCardProps> = ({
   mediaType = 'movie',
   showAvailability = false 
 }) => {
-  const available = showAvailability ? isAvailable(id) : false;
+  const available = showAvailability ? isAvailable(String(id)) : false;
   
   return (
     <Link to={`/movie/${id}?type=${mediaType}`} className="flex flex-col space-y-2 group">
